@@ -352,7 +352,20 @@ class TransformedDataset:
         except KeyError:
             # Novel word
             return 0
-        
-    
-    def save(self, fname):
-        raise NotImplementedError
+
+    def save_pickle(self, PATH="data/final/", light=True):
+        """Save the dataset as a pickle."""
+        if light:
+            # Drop out original text column before saving
+            self.df.drop(self.orig_text_col, axis=1, inplace=True)
+
+        if not os.path.exists(PATH):
+            os.makedirs(PATH)
+
+        with open(f"{PATH}{self.name}_dataset.pkl", 'wb') as f:
+            pickle.dump(self, f)
+
+    def load_pickle(fname):
+        """Load a dataset from a pickle."""
+        with open(fname, 'rb') as f:
+            return pickle.load(f)
