@@ -130,6 +130,15 @@ class Dataset:
         df[self.recipient_col] = [v if v == 'M' else 'F'
                                   for v in df[self.recipient_col]]
 
+        # Filter out bot-like responses
+        msk = df['response_text'].apply(lambda t:
+            t[:35] != 'Welcome! Fitocracy is a great place' and \
+            t[:45] != 'Hello and welcome! Fitocracy is a great place')
+
+        df = df[msk]
+        df.reset_index(inplace=True)
+
+
         return df
 
     def _clean_text(self, text):
@@ -269,11 +278,13 @@ class Dataset:
 
 class TransformedDataset:
     
-    def __init__(self, dataset, gamma, lambd=1, pre_comp_word_counts=None):
+    def __init__(self, dataset, gamma, lambd=1, pre_comp_word_counts=None,
+                 label_col='sender_label'):
         
         self.gamma = gamma
         self.lambd = lambd
-        self.all_labels = set(dataset.df['sender_label'])
+        self.label_col = label_col
+        self.all_labels = set(dataset.df[self.label_col])
         
         # Determine word-counts
         if pre_comp_word_counts is None:
@@ -294,7 +305,7 @@ class TransformedDataset:
         """Get out the naive-bayes counts for all words."""
         
         # Split by_label
-        dfs = {label: df[df['sender_label'] == label]
+        dfs = {label: df[df[self.label_col] == label]
                      for label in self.all_labels}
 
         # Count words for each
@@ -326,7 +337,7 @@ class TransformedDataset:
     
     def split_ca(self, df, label):
         """Split each sentence into its context and its attributes."""            
-        df = df[df['sender_label'] == label]
+        df = df[df[self.label_col] == label]
         ca_pairs = df['cleaned_text'].progress_apply(self._split_ca, args=(label,))
             
         return ca_pairs
