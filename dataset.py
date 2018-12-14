@@ -172,7 +172,7 @@ class Dataset:
 
     @property
     def splits(self):
-        return Splits(self.train, self.dev, self.test)
+        return [self.train, self.dev, self.test]
     
     def make_vectorizer(self, vec_kwargs):
         """Make a Tf-idf vectorizer on the given corpus."""
@@ -285,9 +285,9 @@ class TransformedDataset:
         
         # Make context-attribute pairs
         print("Transforming Splits")
-        self.male_splits = split_tuple(*[self.split_ca(split, 0)
+        self.male_splits = Splits(*[self.split_ca(split, 0)
                                          for split in dataset.splits])
-        self.female_splits = split_tuple(*[self.split_ca(split, 1)
+        self.female_splits = Splits(*[self.split_ca(split, 1)
                                          for split in dataset.splits])
 
     def make_word_counts_df(self, df):
@@ -299,12 +299,12 @@ class TransformedDataset:
 
         # Count words for each
         vectorizers = {label: CountVectorizer(min_df=10).fit(
-                                dfs[label]['response_text'])
+                                dfs[label]['cleaned_text'])
                        for label in self.all_labels}
 
         # Convert to DataFrame
         word_counts = {label: np.array(vectorizers[label].transform(
-                                [' '.join(dfs[label]['response_text'])]).todense())[0]
+                                [' '.join(dfs[label]['cleaned_text'])]).todense())[0]
                        for label in self.all_labels}
         features = {label: vectorizers[label].get_feature_names()
                     for label in self.all_labels}
